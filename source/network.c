@@ -2,6 +2,7 @@
  *     File Name :                        network.c
  *     Abstract Description :             神经网络计算
  *     todo :                             use base layer struct
+ *                                        save and load weights
  *                                        add comments
  *                                        simplified matrix calculation
  *                                        add rnn, cnn
@@ -13,12 +14,10 @@
 /**********************************************************************************************
  * 判断相应的输入参数是否在 enum 表中
  ***********************************************************************************************/
-FLAG is_in_optimizer_tab(OPTIMIZER optimizer)
-{
+FLAG is_in_optimizer_tab(OPTIMIZER optimizer) {
     FLAG flag = false;
 
-    switch (optimizer)
-    {
+    switch (optimizer) {
 #define OPTIMIZER_MACRO(a, b) case a:
         OPTIMIZER_TAB
 #undef OPTIMIZER_MACRO
@@ -33,12 +32,10 @@ FLAG is_in_optimizer_tab(OPTIMIZER optimizer)
     return flag;
 }
 
-FLAG is_in_loss_tab(LOSS loss)
-{
+FLAG is_in_loss_tab(LOSS loss) {
     FLAG flag = false;
 
-    switch (loss)
-    {
+    switch (loss) {
 #define LOSS_MACRO(a, b) case a:
         LOSS_TAB
 #undef LOSS_MACRO
@@ -64,10 +61,10 @@ Output: 无
 Input_Output: 矩阵A
 Return: 无
 ***********************************************************************************************/
-VOID init_weights(_IN_OUT MATRIX *A, _IN INIT_WEIGHTS initWeights)
-{
+VOID init_weights(_IN_OUT MATRIX *A, _IN INIT_WEIGHTS initWeights) {
     ASSERT(A != NULL);
-    ASSERT(is_in_init_weights_tab(initWeights) && initWeights != NullInitWeight);
+    ASSERT(is_in_init_weights_tab(initWeights) &&
+           initWeights != NullInitWeight);
 
     INDEX i, j;
     INTEGER rows, columns;
@@ -75,73 +72,63 @@ VOID init_weights(_IN_OUT MATRIX *A, _IN INIT_WEIGHTS initWeights)
     rows = A->rows;
     columns = A->columns;
 
-    switch (initWeights)
-    {
+    switch (initWeights) {
     case Uniform01:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
-                A->p[i * columns + j] = uniform_distribution(0, 1); //产生[0, 1]的随机数
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
+                A->p[i * columns + j] =
+                    uniform_distribution(0, 1); //产生[0, 1]的随机数
             }
         }
         break;
 
     case Uniform11:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
-                A->p[i * columns + j] = uniform_distribution(-1, 1); //产生[-1, 1]的随机数
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
+                A->p[i * columns + j] =
+                    uniform_distribution(-1, 1); //产生[-1, 1]的随机数
             }
         }
         break;
 
     case Normal:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
-                A->p[i * columns + j] = normal_distribution(0, 1); //产生均值为0，方差为1的随机数
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
+                A->p[i * columns + j] =
+                    normal_distribution(0, 1); //产生均值为0，方差为1的随机数
             }
         }
         break;
 
     case XavierUniform:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
-                A->p[i * columns + j] = xavier_uniform_distribution(rows, columns);
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
+                A->p[i * columns + j] =
+                    xavier_uniform_distribution(rows, columns);
             }
         }
         break;
 
     case XavierNormal:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
-                A->p[i * columns + j] = xavier_normal_distribution(rows, columns);
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
+                A->p[i * columns + j] =
+                    xavier_normal_distribution(rows, columns);
             }
         }
         break;
 
     case HeUniform:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 A->p[i * columns + j] = he_uniform_distribution(rows, columns);
             }
         }
         break;
 
     case HeNormal:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 A->p[i * columns + j] = he_normal_distribution(rows, columns);
             }
         }
@@ -163,8 +150,8 @@ Output: 矩阵B
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID network_activation(_IN MATRIX *A, _IN ACTIVATION choose, _IN REAL a, _OUT MATRIX *B)
-{
+VOID network_activation(_IN MATRIX *A, _IN ACTIVATION choose, _IN REAL a,
+                        _OUT MATRIX *B) {
     ASSERT(A != NULL);
     ASSERT(is_in_activation_tab(choose) && choose != NullActivation);
     ASSERT(a >= 0 && a <= 1);
@@ -176,63 +163,50 @@ VOID network_activation(_IN MATRIX *A, _IN ACTIVATION choose, _IN REAL a, _OUT M
     rows = A->rows;
     columns = A->columns;
 
-    switch (choose)
-    {
+    switch (choose) {
     case Identity:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = identity(A->p[i * columns + j]);
             }
         }
         break;
 
     case Sigmoid:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = sigmoid(A->p[i * columns + j]);
             }
         }
         break;
 
     case Tanh:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = tanh(A->p[i * columns + j]);
             }
         }
         break;
 
     case Relu:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = relu(A->p[i * columns + j]);
             }
         }
         break;
 
     case PRelu:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = prelu(a, A->p[i * columns + j]);
             }
         }
         break;
 
     case Elu:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = elu(a, A->p[i * columns + j]);
             }
         }
@@ -251,8 +225,8 @@ Output: 矩阵B
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID network_dactivation(_IN MATRIX *A, _IN ACTIVATION choose, _IN REAL a, _OUT MATRIX *B)
-{
+VOID network_dactivation(_IN MATRIX *A, _IN ACTIVATION choose, _IN REAL a,
+                         _OUT MATRIX *B) {
     ASSERT(A != NULL);
     ASSERT(is_in_activation_tab(choose) && choose != NullActivation);
     ASSERT(a >= 0 && a <= 1);
@@ -264,63 +238,50 @@ VOID network_dactivation(_IN MATRIX *A, _IN ACTIVATION choose, _IN REAL a, _OUT 
     rows = A->rows;
     columns = A->columns;
 
-    switch (choose)
-    {
+    switch (choose) {
     case Identity:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = d_identity();
             }
         }
         break;
 
     case Sigmoid:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = d_sigmoid(A->p[i * columns + j]);
             }
         }
         break;
 
     case Tanh:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = d_tanh(A->p[i * columns + j]);
             }
         }
         break;
 
     case Relu:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = d_relu(A->p[i * columns + j]);
             }
         }
         break;
 
     case PRelu:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = d_prelu(a, A->p[i * columns + j]);
             }
         }
         break;
 
     case Elu:
-        for (i = 0; i < rows; i++)
-        {
-            for (j = 0; j < columns; j++)
-            {
+        for (i = 0; i < rows; i++) {
+            for (j = 0; j < columns; j++) {
                 B->p[i * columns + j] = d_elu(a, A->p[i * columns + j]);
             }
         }
@@ -342,8 +303,7 @@ Output: 无
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID dense_layer_forward_calculate(_IN LAYER_NODE *currentLayer)
-{
+VOID dense_layer_forward_calculate(_IN LAYER_NODE *currentLayer) {
     ASSERT(currentLayer != NULL && currentLayer->name == DenseLayer);
 
     INDEX i, j, k;
@@ -355,21 +315,20 @@ VOID dense_layer_forward_calculate(_IN LAYER_NODE *currentLayer)
     MATRIX *Xnj = currentLayer->pDenseLayer->pXnj;
 
     // Ynj = Xni * Wij + Enj
-    for (i = 0; i < Xni->rows; i++)
-    {
-        for (j = 0; j < Wij->columns; j++)
-        {
+    for (i = 0; i < Xni->rows; i++) {
+        for (j = 0; j < Wij->columns; j++) {
             sum = 0.0;
-            for (k = 0; k < Xni->columns; k++)
-            {
-                sum += Xni->p[i * Xni->columns + k] * Wij->p[k * Wij->columns + j];
+            for (k = 0; k < Xni->columns; k++) {
+                sum +=
+                    Xni->p[i * Xni->columns + k] * Wij->p[k * Wij->columns + j];
             }
             Ynj->p[i * Wij->columns + j] = sum + Enj->p[j];
         }
     }
 
     // Xnj = f(Ynj)
-    network_activation(Ynj, currentLayer->pDenseLayer->activation, currentLayer->pDenseLayer->alpha, Xnj);
+    network_activation(Ynj, currentLayer->pDenseLayer->activation,
+                       currentLayer->pDenseLayer->alpha, Xnj);
 }
 
 /**********************************************************************************************
@@ -380,8 +339,8 @@ Output: 无
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID dense_layer_backward_calculate(_IN LAYER_NODE *currentLayer, _IN MATRIX *lossValue)
-{
+VOID dense_layer_backward_calculate(_IN LAYER_NODE *currentLayer,
+                                    _IN MATRIX *lossValue) {
     ASSERT(currentLayer != NULL && currentLayer->name == DenseLayer);
     ASSERT(lossValue != NULL);
 
@@ -389,9 +348,9 @@ VOID dense_layer_backward_calculate(_IN LAYER_NODE *currentLayer, _IN MATRIX *lo
     REAL sum;
     MATRIX *Xni = currentLayer->pDenseLayer->pXni;
     MATRIX *Wij = currentLayer->pDenseLayer->pWij;
-//    MATRIX *Enj = currentLayer->pDenseLayer->pEnj;
+    //    MATRIX *Enj = currentLayer->pDenseLayer->pEnj;
     MATRIX *Ynj = currentLayer->pDenseLayer->pYnj;
-//    MATRIX *Xnj = currentLayer->pDenseLayer->pXnj;
+    //    MATRIX *Xnj = currentLayer->pDenseLayer->pXnj;
     // 反向计算需要的转置矩阵
     MATRIX *Xni_T = currentLayer->pDenseLayer->pXni_T;
     MATRIX *Wij_T = currentLayer->pDenseLayer->pWij_T;
@@ -400,23 +359,22 @@ VOID dense_layer_backward_calculate(_IN LAYER_NODE *currentLayer, _IN MATRIX *lo
     MATRIX *DWij = currentLayer->pDenseLayer->pDWij;
     MATRIX *DEnk, *Wjk_T;
 
-    if (currentLayer->next->name == HeadLayer)
-    {
-        network_dactivation(Ynj, currentLayer->pDenseLayer->activation, currentLayer->pDenseLayer->alpha, DEnj);
-//        ASSERT(DEnj->rows == lossValue->rows && DEnj->columns == lossValue->columns);
-//        ASSERT(Xni->rows == Xni_T->columns && Xni->columns == Xni_T->rows);
+    if (currentLayer->next->name == HeadLayer) {
+        network_dactivation(Ynj, currentLayer->pDenseLayer->activation,
+                            currentLayer->pDenseLayer->alpha, DEnj);
+        //        ASSERT(DEnj->rows == lossValue->rows && DEnj->columns ==
+        //        lossValue->columns); ASSERT(Xni->rows == Xni_T->columns &&
+        //        Xni->columns == Xni_T->rows);
 
         matrix_dot(DEnj, lossValue, DEnj);
         matrix_transpose(Xni, Xni_T);
         matrix_mul(Xni_T, DEnj, DWij);
         matrix_transpose(Wij, Wij_T);
-    }
-    else
-    {
-        network_dactivation(Ynj, currentLayer->pDenseLayer->activation, currentLayer->pDenseLayer->alpha, DEnj);
+    } else {
+        network_dactivation(Ynj, currentLayer->pDenseLayer->activation,
+                            currentLayer->pDenseLayer->alpha, DEnj);
 
-        switch (currentLayer->next->name)
-        {
+        switch (currentLayer->next->name) {
         case DenseLayer:
             DEnk = currentLayer->next->pDenseLayer->pDEnj;
             Wjk_T = currentLayer->next->pDenseLayer->pWij_T;
@@ -427,13 +385,10 @@ VOID dense_layer_backward_calculate(_IN LAYER_NODE *currentLayer, _IN MATRIX *lo
         }
 
         // DEnj = DEnk * Wjk_T dot f'(Ynj)
-        for (i = 0; i < DEnk->rows; i++)
-        {
-            for (j = 0; j < Wjk_T->columns; j++)
-            {
+        for (i = 0; i < DEnk->rows; i++) {
+            for (j = 0; j < Wjk_T->columns; j++) {
                 sum = 0.0;
-                for (k = 0; k < DEnk->columns; k++)
-                {
+                for (k = 0; k < DEnk->columns; k++) {
                     sum += DEnk->p[i * DEnk->columns + k] *
                            Wjk_T->p[k * Wjk_T->columns + j];
                 }
@@ -460,8 +415,7 @@ Output: 无
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID weight_update_sgd(_IN LAYER_LIST *layerList)
-{
+VOID weight_update_sgd(_IN LAYER_LIST *layerList) {
     ASSERT(layerList != NULL);
     ASSERT(layerList->next != NULL);
     ASSERT(layerList->next->next != NULL);
@@ -470,19 +424,23 @@ VOID weight_update_sgd(_IN LAYER_LIST *layerList)
     REAL alpha = layerList->optParameters->sgdAlpha;
 
     currentLayer = headLayer->next;
-    while (currentLayer != headLayer)
-    {
-        switch (currentLayer->name)
-        {
+    while (currentLayer != headLayer) {
+        switch (currentLayer->name) {
         case DenseLayer:
             // TODO: ASSERT
             // Wij = Wij - alpha * DWij
-            matrix_mul_num(currentLayer->pDenseLayer->pDWij, alpha, currentLayer->pDenseLayer->pTempDWij);
-            matrix_sub(currentLayer->pDenseLayer->pWij, currentLayer->pDenseLayer->pTempDWij, currentLayer->pDenseLayer->pWij);
+            matrix_mul_num(currentLayer->pDenseLayer->pDWij, alpha,
+                           currentLayer->pDenseLayer->pTempDWij);
+            matrix_sub(currentLayer->pDenseLayer->pWij,
+                       currentLayer->pDenseLayer->pTempDWij,
+                       currentLayer->pDenseLayer->pWij);
 
             // Enj = Enj - alpha * DEnj
-            matrix_mul_num(currentLayer->pDenseLayer->pDEnj, alpha, currentLayer->pDenseLayer->pTempDEnj);
-            matrix_sub(currentLayer->pDenseLayer->pEnj, currentLayer->pDenseLayer->pTempDEnj, currentLayer->pDenseLayer->pEnj);
+            matrix_mul_num(currentLayer->pDenseLayer->pDEnj, alpha,
+                           currentLayer->pDenseLayer->pTempDEnj);
+            matrix_sub(currentLayer->pDenseLayer->pEnj,
+                       currentLayer->pDenseLayer->pTempDEnj,
+                       currentLayer->pDenseLayer->pEnj);
             break;
 
         default:
@@ -501,8 +459,7 @@ Output: 无
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID weight_update_momentum(_IN LAYER_LIST *layerList)
-{
+VOID weight_update_momentum(_IN LAYER_LIST *layerList) {
     ASSERT(layerList != NULL);
     ASSERT(layerList->next != NULL);
     ASSERT(layerList->next->next != NULL);
@@ -512,25 +469,35 @@ VOID weight_update_momentum(_IN LAYER_LIST *layerList)
     REAL beta = layerList->optParameters->momentumBeta;
 
     currentLayer = headLayer->next;
-    while (currentLayer != headLayer)
-    {
-        switch (currentLayer->name)
-        {
+    while (currentLayer != headLayer) {
+        switch (currentLayer->name) {
         case DenseLayer:
             // TODO: ASSERT
             // vWij = alpha * vWij + beta * DWij
-            matrix_mul_num(currentLayer->pDenseLayer->pvDWij, alpha, currentLayer->pDenseLayer->pvDWij);
-            matrix_mul_num(currentLayer->pDenseLayer->pDWij, beta, currentLayer->pDenseLayer->pTempDWij);
-            matrix_add(currentLayer->pDenseLayer->pvDWij, currentLayer->pDenseLayer->pTempDWij, currentLayer->pDenseLayer->pvDWij);
+            matrix_mul_num(currentLayer->pDenseLayer->pvDWij, alpha,
+                           currentLayer->pDenseLayer->pvDWij);
+            matrix_mul_num(currentLayer->pDenseLayer->pDWij, beta,
+                           currentLayer->pDenseLayer->pTempDWij);
+            matrix_add(currentLayer->pDenseLayer->pvDWij,
+                       currentLayer->pDenseLayer->pTempDWij,
+                       currentLayer->pDenseLayer->pvDWij);
             // Wij = Wij - vWij
-            matrix_sub(currentLayer->pDenseLayer->pWij, currentLayer->pDenseLayer->pvDWij, currentLayer->pDenseLayer->pWij);
+            matrix_sub(currentLayer->pDenseLayer->pWij,
+                       currentLayer->pDenseLayer->pvDWij,
+                       currentLayer->pDenseLayer->pWij);
 
             // vEnj = alpha * vEnj + beta * DEnj
-            matrix_mul_num(currentLayer->pDenseLayer->pvDEnj, alpha, currentLayer->pDenseLayer->pvDEnj);
-            matrix_mul_num(currentLayer->pDenseLayer->pDEnj, beta, currentLayer->pDenseLayer->pTempDEnj);
-            matrix_add(currentLayer->pDenseLayer->pvDEnj, currentLayer->pDenseLayer->pTempDEnj, currentLayer->pDenseLayer->pvDEnj);
+            matrix_mul_num(currentLayer->pDenseLayer->pvDEnj, alpha,
+                           currentLayer->pDenseLayer->pvDEnj);
+            matrix_mul_num(currentLayer->pDenseLayer->pDEnj, beta,
+                           currentLayer->pDenseLayer->pTempDEnj);
+            matrix_add(currentLayer->pDenseLayer->pvDEnj,
+                       currentLayer->pDenseLayer->pTempDEnj,
+                       currentLayer->pDenseLayer->pvDEnj);
             // Enj = Enj - vEnj
-            matrix_sub(currentLayer->pDenseLayer->pEnj, currentLayer->pDenseLayer->pvDEnj, currentLayer->pDenseLayer->pEnj);
+            matrix_sub(currentLayer->pDenseLayer->pEnj,
+                       currentLayer->pDenseLayer->pvDEnj,
+                       currentLayer->pDenseLayer->pEnj);
             break;
 
         default:
@@ -549,8 +516,7 @@ Output: 无
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID weight_update_rmsprop(_IN LAYER_LIST *layerList)
-{
+VOID weight_update_rmsprop(_IN LAYER_LIST *layerList) {
     ASSERT(layerList != NULL);
     ASSERT(layerList->next != NULL);
     ASSERT(layerList->next->next != NULL);
@@ -561,35 +527,59 @@ VOID weight_update_rmsprop(_IN LAYER_LIST *layerList)
     REAL epsilon = layerList->optParameters->rmspropEpsilon;
 
     currentLayer = headLayer->next;
-    while (currentLayer != headLayer)
-    {
-        switch (currentLayer->name)
-        {
+    while (currentLayer != headLayer) {
+        switch (currentLayer->name) {
         case DenseLayer:
             // TODO: ASSERT
             // vWij = alpha * vWij + (1 - alpha) * DWij dot DWij
-            matrix_mul_num(currentLayer->pDenseLayer->pvDWij, alpha, currentLayer->pDenseLayer->pvDWij);
-            matrix_dot(currentLayer->pDenseLayer->pDWij, currentLayer->pDenseLayer->pDWij, currentLayer->pDenseLayer->pTempDWij);
-            matrix_mul_num(currentLayer->pDenseLayer->pTempDWij, 1 - alpha, currentLayer->pDenseLayer->pTempDWij);
-            matrix_add(currentLayer->pDenseLayer->pvDWij, currentLayer->pDenseLayer->pTempDWij, currentLayer->pDenseLayer->pvDWij);
+            matrix_mul_num(currentLayer->pDenseLayer->pvDWij, alpha,
+                           currentLayer->pDenseLayer->pvDWij);
+            matrix_dot(currentLayer->pDenseLayer->pDWij,
+                       currentLayer->pDenseLayer->pDWij,
+                       currentLayer->pDenseLayer->pTempDWij);
+            matrix_mul_num(currentLayer->pDenseLayer->pTempDWij, 1 - alpha,
+                           currentLayer->pDenseLayer->pTempDWij);
+            matrix_add(currentLayer->pDenseLayer->pvDWij,
+                       currentLayer->pDenseLayer->pTempDWij,
+                       currentLayer->pDenseLayer->pvDWij);
             // Wij = Wij - beta / (sqrt(vWij + epsilon)) dot DWij
-            matrix_add_num(currentLayer->pDenseLayer->pvDWij, epsilon, currentLayer->pDenseLayer->pTempDWij);
-            matrix_pow_num(currentLayer->pDenseLayer->pTempDWij, 0.5, currentLayer->pDenseLayer->pTempDWij);
-            num_divide_matrix(beta, currentLayer->pDenseLayer->pTempDWij, currentLayer->pDenseLayer->pTempDWij);
-            matrix_dot(currentLayer->pDenseLayer->pTempDWij, currentLayer->pDenseLayer->pDWij, currentLayer->pDenseLayer->pTempDWij);
-            matrix_sub(currentLayer->pDenseLayer->pWij, currentLayer->pDenseLayer->pTempDWij, currentLayer->pDenseLayer->pWij);
+            matrix_add_num(currentLayer->pDenseLayer->pvDWij, epsilon,
+                           currentLayer->pDenseLayer->pTempDWij);
+            matrix_pow_num(currentLayer->pDenseLayer->pTempDWij, 0.5,
+                           currentLayer->pDenseLayer->pTempDWij);
+            num_divide_matrix(beta, currentLayer->pDenseLayer->pTempDWij,
+                              currentLayer->pDenseLayer->pTempDWij);
+            matrix_dot(currentLayer->pDenseLayer->pTempDWij,
+                       currentLayer->pDenseLayer->pDWij,
+                       currentLayer->pDenseLayer->pTempDWij);
+            matrix_sub(currentLayer->pDenseLayer->pWij,
+                       currentLayer->pDenseLayer->pTempDWij,
+                       currentLayer->pDenseLayer->pWij);
 
             // vEnj = alpha * vEnj + (1 - alpha) * DEnj dot DEnj
-            matrix_mul_num(currentLayer->pDenseLayer->pvDEnj, alpha, currentLayer->pDenseLayer->pvDEnj);
-            matrix_dot(currentLayer->pDenseLayer->pDEnj, currentLayer->pDenseLayer->pDEnj, currentLayer->pDenseLayer->pTempDEnj);
-            matrix_mul_num(currentLayer->pDenseLayer->pTempDEnj, 1 - alpha, currentLayer->pDenseLayer->pTempDEnj);
-            matrix_add(currentLayer->pDenseLayer->pvDEnj, currentLayer->pDenseLayer->pTempDEnj, currentLayer->pDenseLayer->pvDEnj);
+            matrix_mul_num(currentLayer->pDenseLayer->pvDEnj, alpha,
+                           currentLayer->pDenseLayer->pvDEnj);
+            matrix_dot(currentLayer->pDenseLayer->pDEnj,
+                       currentLayer->pDenseLayer->pDEnj,
+                       currentLayer->pDenseLayer->pTempDEnj);
+            matrix_mul_num(currentLayer->pDenseLayer->pTempDEnj, 1 - alpha,
+                           currentLayer->pDenseLayer->pTempDEnj);
+            matrix_add(currentLayer->pDenseLayer->pvDEnj,
+                       currentLayer->pDenseLayer->pTempDEnj,
+                       currentLayer->pDenseLayer->pvDEnj);
             // Enj = Enj - beta / (sqrt(vEnj + epsilon)) dot DEnj
-            matrix_add_num(currentLayer->pDenseLayer->pvDEnj, epsilon, currentLayer->pDenseLayer->pTempDEnj);
-            matrix_pow_num(currentLayer->pDenseLayer->pTempDEnj, 0.5, currentLayer->pDenseLayer->pTempDEnj);
-            num_divide_matrix(beta, currentLayer->pDenseLayer->pTempDEnj, currentLayer->pDenseLayer->pTempDEnj);
-            matrix_dot(currentLayer->pDenseLayer->pTempDEnj, currentLayer->pDenseLayer->pDEnj, currentLayer->pDenseLayer->pTempDEnj);
-            matrix_sub(currentLayer->pDenseLayer->pEnj, currentLayer->pDenseLayer->pTempDEnj, currentLayer->pDenseLayer->pEnj);
+            matrix_add_num(currentLayer->pDenseLayer->pvDEnj, epsilon,
+                           currentLayer->pDenseLayer->pTempDEnj);
+            matrix_pow_num(currentLayer->pDenseLayer->pTempDEnj, 0.5,
+                           currentLayer->pDenseLayer->pTempDEnj);
+            num_divide_matrix(beta, currentLayer->pDenseLayer->pTempDEnj,
+                              currentLayer->pDenseLayer->pTempDEnj);
+            matrix_dot(currentLayer->pDenseLayer->pTempDEnj,
+                       currentLayer->pDenseLayer->pDEnj,
+                       currentLayer->pDenseLayer->pTempDEnj);
+            matrix_sub(currentLayer->pDenseLayer->pEnj,
+                       currentLayer->pDenseLayer->pTempDEnj,
+                       currentLayer->pDenseLayer->pEnj);
             break;
 
         default:
@@ -608,15 +598,15 @@ Output: 无
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID weight_update_adam(_IN LAYER_LIST *layerList, _IN INTEGER num)
-{
+VOID weight_update_adam(_IN LAYER_LIST *layerList, _IN INTEGER num) {
     ASSERT(layerList != NULL);
     ASSERT(layerList->next != NULL);
     ASSERT(layerList->next->next != NULL);
     ASSERT(num >= 0);
 
     STACKS S;
-    MATRIX *pmDWijTemp = NULL, *pvDWijTemp = NULL, *pmDEnjTemp = NULL, *pvDEnjTemp = NULL;
+    MATRIX *pmDWijTemp = NULL, *pvDWijTemp = NULL, *pmDEnjTemp = NULL,
+           *pvDEnjTemp = NULL;
     LAYER_NODE *headLayer = layerList->next, *currentLayer = NULL;
     REAL alpha = layerList->optParameters->adamAlpha;
     REAL beta1 = layerList->optParameters->adamBeta1;
@@ -631,59 +621,93 @@ VOID weight_update_adam(_IN LAYER_LIST *layerList, _IN INTEGER num)
     init_stack(&S);
 
     currentLayer = headLayer->next;
-    while (currentLayer != headLayer)
-    {
-        switch (currentLayer->name)
-        {
+    while (currentLayer != headLayer) {
+        switch (currentLayer->name) {
         case DenseLayer:
-            pmDWijTemp = creat_matrix(currentLayer->pDenseLayer->pDWij->rows, currentLayer->pDenseLayer->pDWij->columns, &errorID, &S);
-            pvDWijTemp = creat_matrix(currentLayer->pDenseLayer->pDWij->rows, currentLayer->pDenseLayer->pDWij->columns, &errorID, &S);
-            pmDEnjTemp = creat_matrix(currentLayer->pDenseLayer->pDEnj->rows, currentLayer->pDenseLayer->pDEnj->columns, &errorID, &S);
-            pvDEnjTemp = creat_matrix(currentLayer->pDenseLayer->pDEnj->rows, currentLayer->pDenseLayer->pDEnj->columns, &errorID, &S);
-            if (pmDWijTemp == NULL || pvDWijTemp == NULL || pmDEnjTemp == NULL || pvDEnjTemp == NULL) {
+            pmDWijTemp = creat_matrix(currentLayer->pDenseLayer->pDWij->rows,
+                                      currentLayer->pDenseLayer->pDWij->columns,
+                                      &errorID, &S);
+            pvDWijTemp = creat_matrix(currentLayer->pDenseLayer->pDWij->rows,
+                                      currentLayer->pDenseLayer->pDWij->columns,
+                                      &errorID, &S);
+            pmDEnjTemp = creat_matrix(currentLayer->pDenseLayer->pDEnj->rows,
+                                      currentLayer->pDenseLayer->pDEnj->columns,
+                                      &errorID, &S);
+            pvDEnjTemp = creat_matrix(currentLayer->pDenseLayer->pDEnj->rows,
+                                      currentLayer->pDenseLayer->pDEnj->columns,
+                                      &errorID, &S);
+            if (pmDWijTemp == NULL || pvDWijTemp == NULL ||
+                pmDEnjTemp == NULL || pvDEnjTemp == NULL) {
                 puts("ERROR_FAILED_TO_ALLOCATE_HEAP_MEMORY");
                 goto EXIT;
             }
-            
+
             // mWij = beta1 * mWij + (1 - beta1) * DWij
-            matrix_mul_num(currentLayer->pDenseLayer->pmDWij, beta1, currentLayer->pDenseLayer->pmDWij);
-            matrix_mul_num(currentLayer->pDenseLayer->pDWij, 1 - beta1, currentLayer->pDenseLayer->pTempDWij);
-            matrix_add(currentLayer->pDenseLayer->pmDWij, currentLayer->pDenseLayer->pTempDWij, currentLayer->pDenseLayer->pmDWij);
+            matrix_mul_num(currentLayer->pDenseLayer->pmDWij, beta1,
+                           currentLayer->pDenseLayer->pmDWij);
+            matrix_mul_num(currentLayer->pDenseLayer->pDWij, 1 - beta1,
+                           currentLayer->pDenseLayer->pTempDWij);
+            matrix_add(currentLayer->pDenseLayer->pmDWij,
+                       currentLayer->pDenseLayer->pTempDWij,
+                       currentLayer->pDenseLayer->pmDWij);
             // mWij' = mWij / (1 - beta1t)
-            matrix_mul_num(currentLayer->pDenseLayer->pmDWij, 1 / (1 - beta1t), pmDWijTemp);
+            matrix_mul_num(currentLayer->pDenseLayer->pmDWij, 1 / (1 - beta1t),
+                           pmDWijTemp);
             // vWij = beta2 * vWij + (1 - beta2) * DWij dot DWij
-            matrix_mul_num(currentLayer->pDenseLayer->pvDWij, beta2, currentLayer->pDenseLayer->pvDWij);
-            matrix_dot(currentLayer->pDenseLayer->pDWij, currentLayer->pDenseLayer->pDWij, currentLayer->pDenseLayer->pTempDWij);
-            matrix_mul_num(currentLayer->pDenseLayer->pTempDWij, 1 - beta2, currentLayer->pDenseLayer->pTempDWij);
-            matrix_add(currentLayer->pDenseLayer->pvDWij, currentLayer->pDenseLayer->pTempDWij, currentLayer->pDenseLayer->pvDWij);
+            matrix_mul_num(currentLayer->pDenseLayer->pvDWij, beta2,
+                           currentLayer->pDenseLayer->pvDWij);
+            matrix_dot(currentLayer->pDenseLayer->pDWij,
+                       currentLayer->pDenseLayer->pDWij,
+                       currentLayer->pDenseLayer->pTempDWij);
+            matrix_mul_num(currentLayer->pDenseLayer->pTempDWij, 1 - beta2,
+                           currentLayer->pDenseLayer->pTempDWij);
+            matrix_add(currentLayer->pDenseLayer->pvDWij,
+                       currentLayer->pDenseLayer->pTempDWij,
+                       currentLayer->pDenseLayer->pvDWij);
             // vWij' = vWij / (1 - beta2t)
-            matrix_mul_num(currentLayer->pDenseLayer->pvDWij, 1 / (1 - beta2t), pvDWijTemp);
+            matrix_mul_num(currentLayer->pDenseLayer->pvDWij, 1 / (1 - beta2t),
+                           pvDWijTemp);
             // Wij = Wij - alpha / (sqrt(vWij' + epsilon)) dot mWij'
             matrix_add_num(pvDWijTemp, epsilon, pvDWijTemp);
             matrix_pow_num(pvDWijTemp, 0.5, pvDWijTemp);
             num_divide_matrix(alpha, pvDWijTemp, pvDWijTemp);
             matrix_dot(pvDWijTemp, pmDWijTemp, pvDWijTemp);
-            matrix_sub(currentLayer->pDenseLayer->pWij, pvDWijTemp, currentLayer->pDenseLayer->pWij);
+            matrix_sub(currentLayer->pDenseLayer->pWij, pvDWijTemp,
+                       currentLayer->pDenseLayer->pWij);
 
             // mEnj = (beta1 * mEnj + (1 - beta1) * DEnj) / (1 - beta1t)
-            matrix_mul_num(currentLayer->pDenseLayer->pmDEnj, beta1, currentLayer->pDenseLayer->pmDEnj);
-            matrix_mul_num(currentLayer->pDenseLayer->pDEnj, 1 - beta1, currentLayer->pDenseLayer->pTempDEnj);
-            matrix_add(currentLayer->pDenseLayer->pmDEnj, currentLayer->pDenseLayer->pTempDEnj, currentLayer->pDenseLayer->pmDEnj);
+            matrix_mul_num(currentLayer->pDenseLayer->pmDEnj, beta1,
+                           currentLayer->pDenseLayer->pmDEnj);
+            matrix_mul_num(currentLayer->pDenseLayer->pDEnj, 1 - beta1,
+                           currentLayer->pDenseLayer->pTempDEnj);
+            matrix_add(currentLayer->pDenseLayer->pmDEnj,
+                       currentLayer->pDenseLayer->pTempDEnj,
+                       currentLayer->pDenseLayer->pmDEnj);
             // mEnj' = mEnj / (1 - beta1t)
-            matrix_mul_num(currentLayer->pDenseLayer->pmDEnj, 1 / (1 - beta1t), pmDEnjTemp);
-            // vEnj = (beta2 * vEnj + (1 - beta2) * DEnj dot DEnj) / (1 - beta2t)
-            matrix_mul_num(currentLayer->pDenseLayer->pvDEnj, beta2, currentLayer->pDenseLayer->pvDEnj);
-            matrix_dot(currentLayer->pDenseLayer->pDEnj, currentLayer->pDenseLayer->pDEnj, currentLayer->pDenseLayer->pTempDEnj);
-            matrix_mul_num(currentLayer->pDenseLayer->pTempDEnj, 1 - beta2, currentLayer->pDenseLayer->pTempDEnj);
-            matrix_add(currentLayer->pDenseLayer->pvDEnj, currentLayer->pDenseLayer->pTempDEnj, currentLayer->pDenseLayer->pvDEnj);
+            matrix_mul_num(currentLayer->pDenseLayer->pmDEnj, 1 / (1 - beta1t),
+                           pmDEnjTemp);
+            // vEnj = (beta2 * vEnj + (1 - beta2) * DEnj dot DEnj) / (1 -
+            // beta2t)
+            matrix_mul_num(currentLayer->pDenseLayer->pvDEnj, beta2,
+                           currentLayer->pDenseLayer->pvDEnj);
+            matrix_dot(currentLayer->pDenseLayer->pDEnj,
+                       currentLayer->pDenseLayer->pDEnj,
+                       currentLayer->pDenseLayer->pTempDEnj);
+            matrix_mul_num(currentLayer->pDenseLayer->pTempDEnj, 1 - beta2,
+                           currentLayer->pDenseLayer->pTempDEnj);
+            matrix_add(currentLayer->pDenseLayer->pvDEnj,
+                       currentLayer->pDenseLayer->pTempDEnj,
+                       currentLayer->pDenseLayer->pvDEnj);
             // vEnj' = vEnj / (1 - beta2t)
-            matrix_mul_num(currentLayer->pDenseLayer->pvDEnj, 1 / (1 - beta2t), pvDEnjTemp);
+            matrix_mul_num(currentLayer->pDenseLayer->pvDEnj, 1 / (1 - beta2t),
+                           pvDEnjTemp);
             // Enj = Enj - alpha / (sqrt(vEnj' + epsilon)) dot mEnj'
             matrix_add_num(pvDEnjTemp, epsilon, pvDEnjTemp);
             matrix_pow_num(pvDEnjTemp, 0.5, pvDEnjTemp);
             num_divide_matrix(alpha, pvDEnjTemp, pvDEnjTemp);
             matrix_dot(pvDEnjTemp, pmDEnjTemp, pvDEnjTemp);
-            matrix_sub(currentLayer->pDenseLayer->pEnj, pvDEnjTemp, currentLayer->pDenseLayer->pEnj);
+            matrix_sub(currentLayer->pDenseLayer->pEnj, pvDEnjTemp,
+                       currentLayer->pDenseLayer->pEnj);
 
             break;
 
@@ -693,7 +717,7 @@ VOID weight_update_adam(_IN LAYER_LIST *layerList, _IN INTEGER num)
 
         currentLayer = currentLayer->next;
     }
-    
+
 EXIT:
     free_stack(&S);
 }
@@ -709,8 +733,8 @@ Output: 无
 Input_Output: 无
 Return: 错误号ERROR_ID
 ***********************************************************************************************/
-ERROR_ID init_hidden_layer(_IN MATRIX *xTrain, _IN INTEGER batchSize, _IN LAYER_LIST *layerList, _IN STACKS *S)
-{
+ERROR_ID init_hidden_layer(_IN MATRIX *xTrain, _IN INTEGER batchSize,
+                           _IN LAYER_LIST *layerList, _IN STACKS *S) {
     ASSERT(xTrain != NULL);
     ASSERT(batchSize > 0 && batchSize <= xTrain->rows);
     ASSERT(layerList != NULL);
@@ -727,53 +751,71 @@ ERROR_ID init_hidden_layer(_IN MATRIX *xTrain, _IN INTEGER batchSize, _IN LAYER_
     columnsIn = xTrain->columns;
     headLayer = layerList->next;
     currentLayer = headLayer;
-    do
-    {
+    do {
         currentLayer = currentLayer->next;
 
-        switch (currentLayer->name)
-        {
+        switch (currentLayer->name) {
         case DenseLayer:
             columnsOut = currentLayer->pDenseLayer->units;
 
             currentLayer->pDenseLayer->pXni = currentLayer->prev->Xnext;
-            currentLayer->pDenseLayer->pWij = creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
-            init_weights(currentLayer->pDenseLayer->pWij, currentLayer->pDenseLayer->initWeights);
-            currentLayer->pDenseLayer->pEnj = creat_zero_matrix(1, columnsOut, &errorID, S);
-            currentLayer->pDenseLayer->pYnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
-            currentLayer->pDenseLayer->pXnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
-            currentLayer->pDenseLayer->pXni_T = creat_zero_matrix(columnsIn, rows, &errorID, S);
-            currentLayer->pDenseLayer->pWij_T = creat_zero_matrix(columnsOut, columnsIn, &errorID, S);
-            currentLayer->pDenseLayer->pDEnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
-            currentLayer->pDenseLayer->pDWij = creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
-            switch (layerList->optimizer)
-            {
+            currentLayer->pDenseLayer->pWij =
+                creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
+            init_weights(currentLayer->pDenseLayer->pWij,
+                         currentLayer->pDenseLayer->initWeights);
+            currentLayer->pDenseLayer->pEnj =
+                creat_zero_matrix(1, columnsOut, &errorID, S);
+            currentLayer->pDenseLayer->pYnj =
+                creat_zero_matrix(rows, columnsOut, &errorID, S);
+            currentLayer->pDenseLayer->pXnj =
+                creat_zero_matrix(rows, columnsOut, &errorID, S);
+            currentLayer->pDenseLayer->pXni_T =
+                creat_zero_matrix(columnsIn, rows, &errorID, S);
+            currentLayer->pDenseLayer->pWij_T =
+                creat_zero_matrix(columnsOut, columnsIn, &errorID, S);
+            currentLayer->pDenseLayer->pDEnj =
+                creat_zero_matrix(rows, columnsOut, &errorID, S);
+            currentLayer->pDenseLayer->pDWij =
+                creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
+            switch (layerList->optimizer) {
             case Sgd:
                 currentLayer->pDenseLayer->pmDEnj = NULL;
                 currentLayer->pDenseLayer->pmDWij = NULL;
                 currentLayer->pDenseLayer->pvDEnj = NULL;
                 currentLayer->pDenseLayer->pvDWij = NULL;
-                currentLayer->pDenseLayer->pTempDEnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
-                currentLayer->pDenseLayer->pTempDWij = creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pTempDEnj =
+                    creat_zero_matrix(rows, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pTempDWij =
+                    creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
                 break;
 
             case Momentum:
             case Rmsprop:
                 currentLayer->pDenseLayer->pmDEnj = NULL;
                 currentLayer->pDenseLayer->pmDWij = NULL;
-                currentLayer->pDenseLayer->pvDEnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
-                currentLayer->pDenseLayer->pvDWij = creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
-                currentLayer->pDenseLayer->pTempDEnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
-                currentLayer->pDenseLayer->pTempDWij = creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pvDEnj =
+                    creat_zero_matrix(rows, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pvDWij =
+                    creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pTempDEnj =
+                    creat_zero_matrix(rows, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pTempDWij =
+                    creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
                 break;
 
             case Adam:
-                currentLayer->pDenseLayer->pmDEnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
-                currentLayer->pDenseLayer->pmDWij = creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
-                currentLayer->pDenseLayer->pvDEnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
-                currentLayer->pDenseLayer->pvDWij = creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
-                currentLayer->pDenseLayer->pTempDEnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
-                currentLayer->pDenseLayer->pTempDWij = creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pmDEnj =
+                    creat_zero_matrix(rows, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pmDWij =
+                    creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pvDEnj =
+                    creat_zero_matrix(rows, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pvDWij =
+                    creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pTempDEnj =
+                    creat_zero_matrix(rows, columnsOut, &errorID, S);
+                currentLayer->pDenseLayer->pTempDWij =
+                    creat_zero_matrix(columnsIn, columnsOut, &errorID, S);
                 break;
 
             default:
@@ -796,13 +838,16 @@ ERROR_ID init_hidden_layer(_IN MATRIX *xTrain, _IN INTEGER batchSize, _IN LAYER_
 /**********************************************************************************************
 Function: init_predict_hidden_layer
 Description: 初始化预测的隐层
-Input: 训练数据xTrain，一次训练的量batchSize，网络表predictLayerList、trainLayerList，矩阵栈S
+Input:
+训练数据xTrain，一次训练的量batchSize，网络表predictLayerList、trainLayerList，矩阵栈S
 Output: 无
 Input_Output: 无
 Return: 错误号ERROR_ID
 ***********************************************************************************************/
-ERROR_ID init_predict_hidden_layer(_IN INTEGER size, _IN LAYER_LIST *predictLayerList, _IN LAYER_LIST *trainLayerList, _IN STACKS *S)
-{
+ERROR_ID init_predict_hidden_layer(_IN INTEGER size,
+                                   _IN LAYER_LIST *predictLayerList,
+                                   _IN LAYER_LIST *trainLayerList,
+                                   _IN STACKS *S) {
     ASSERT(size > 0);
     ASSERT(predictLayerList != NULL);
     ASSERT(predictLayerList->next != NULL);
@@ -813,7 +858,8 @@ ERROR_ID init_predict_hidden_layer(_IN INTEGER size, _IN LAYER_LIST *predictLaye
     ASSERT(S != NULL);
 
     INTEGER rows, columnsOut;
-    LAYER_NODE *headLayer = NULL, *currentPredictLayer = NULL, *currentTrainLayer = NULL;
+    LAYER_NODE *headLayer = NULL, *currentPredictLayer = NULL,
+               *currentTrainLayer = NULL;
     ERROR_ID errorID = _ERROR_NO_ERROR;
 
     // 初始化隐层矩阵
@@ -821,21 +867,24 @@ ERROR_ID init_predict_hidden_layer(_IN INTEGER size, _IN LAYER_LIST *predictLaye
     headLayer = predictLayerList->next;
     currentPredictLayer = headLayer;
     currentTrainLayer = trainLayerList->next;
-    do
-    {
+    do {
         currentPredictLayer = currentPredictLayer->next;
         currentTrainLayer = currentTrainLayer->next;
 
-        switch (currentPredictLayer->name)
-        {
+        switch (currentPredictLayer->name) {
         case DenseLayer:
             columnsOut = currentPredictLayer->pDenseLayer->units;
 
-            currentPredictLayer->pDenseLayer->pXni = currentPredictLayer->prev->Xnext;
-            currentPredictLayer->pDenseLayer->pWij = currentTrainLayer->pDenseLayer->pWij;
-            currentPredictLayer->pDenseLayer->pEnj = currentTrainLayer->pDenseLayer->pEnj;
-            currentPredictLayer->pDenseLayer->pYnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
-            currentPredictLayer->pDenseLayer->pXnj = creat_zero_matrix(rows, columnsOut, &errorID, S);
+            currentPredictLayer->pDenseLayer->pXni =
+                currentPredictLayer->prev->Xnext;
+            currentPredictLayer->pDenseLayer->pWij =
+                currentTrainLayer->pDenseLayer->pWij;
+            currentPredictLayer->pDenseLayer->pEnj =
+                currentTrainLayer->pDenseLayer->pEnj;
+            currentPredictLayer->pDenseLayer->pYnj =
+                creat_zero_matrix(rows, columnsOut, &errorID, S);
+            currentPredictLayer->pDenseLayer->pXnj =
+                creat_zero_matrix(rows, columnsOut, &errorID, S);
 
             currentPredictLayer->Xnext = currentPredictLayer->pDenseLayer->pXnj;
             break;
@@ -843,7 +892,8 @@ ERROR_ID init_predict_hidden_layer(_IN INTEGER size, _IN LAYER_LIST *predictLaye
         default:
             break;
         }
-    } while (currentPredictLayer->next != headLayer && errorID == _ERROR_NO_ERROR);
+    } while (currentPredictLayer->next != headLayer &&
+             errorID == _ERROR_NO_ERROR);
 
     return errorID;
 }
@@ -856,8 +906,8 @@ Output: 选择的训练数据xInput、yOutput
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID choose_input(_IN MATRIX *xTrain, _OUT MATRIX *xInput, _IN MATRIX *yTrain, _OUT MATRIX *yOutput, _IN MATRIX *arr)
-{
+VOID choose_input(_IN MATRIX *xTrain, _OUT MATRIX *xInput, _IN MATRIX *yTrain,
+                  _OUT MATRIX *yOutput, _IN MATRIX *arr) {
     ASSERT(xTrain != NULL);
     ASSERT(xInput != NULL);
     ASSERT(yTrain != NULL);
@@ -868,19 +918,16 @@ VOID choose_input(_IN MATRIX *xTrain, _OUT MATRIX *xInput, _IN MATRIX *yTrain, _
     INTEGER row;
 
     // 数组初始化赋值0~rows-1
-    for (i = 0; i < xTrain->rows; i++)
-    {
+    for (i = 0; i < xTrain->rows; i++) {
         arr->p[i] = i;
     }
 
     // 蓄水池抽样法生成随机数组
     //    srand((unsigned int)time(NULL)); //用时间做种，每次产生随机数不一样
-    for (i = xInput->rows; i < xTrain->rows; i++)
-    {
+    for (i = xInput->rows; i < xTrain->rows; i++) {
         j = rand() % (i + 1);
 
-        if (j < xInput->rows)
-        {
+        if (j < xInput->rows) {
             tmp = (int)arr->p[j];
             arr->p[j] = arr->p[i];
             arr->p[i] = tmp;
@@ -888,21 +935,17 @@ VOID choose_input(_IN MATRIX *xTrain, _OUT MATRIX *xInput, _IN MATRIX *yTrain, _
     }
 
     // 选出batchSize的随机数组
-    for (i = 0; i < xInput->rows; i++)
-    {
+    for (i = 0; i < xInput->rows; i++) {
         row = (int)arr->p[i];
-        for (j = 0; j < xTrain->columns; j++)
-        {
+        for (j = 0; j < xTrain->columns; j++) {
             xInput->p[i * xTrain->columns + j] =
                 xTrain->p[row * xTrain->columns + j];
         }
     }
 
-    for (i = 0; i < yOutput->rows; i++)
-    {
+    for (i = 0; i < yOutput->rows; i++) {
         row = (int)arr->p[i];
-        for (j = 0; j < yTrain->columns; j++)
-        {
+        for (j = 0; j < yTrain->columns; j++) {
             yOutput->p[i * yTrain->columns + j] =
                 yTrain->p[row * yTrain->columns + j];
         }
@@ -920,8 +963,7 @@ Output: 无
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID network_forward_calculcte(_IN MATRIX *xInput, _IN LAYER_LIST *layerList)
-{
+VOID network_forward_calculcte(_IN MATRIX *xInput, _IN LAYER_LIST *layerList) {
     ASSERT(xInput != NULL);
     ASSERT(layerList != NULL);
     ASSERT(layerList->next != NULL);
@@ -930,8 +972,7 @@ VOID network_forward_calculcte(_IN MATRIX *xInput, _IN LAYER_LIST *layerList)
     LAYER_NODE *headLayer = layerList->next, *currentLayer = NULL;
 
     headLayer->Xnext = xInput;
-    switch (headLayer->next->name)
-    {
+    switch (headLayer->next->name) {
     case DenseLayer:
         headLayer->next->pDenseLayer->pXni = headLayer->Xnext;
         break;
@@ -941,10 +982,8 @@ VOID network_forward_calculcte(_IN MATRIX *xInput, _IN LAYER_LIST *layerList)
     }
 
     currentLayer = headLayer->next;
-    while (currentLayer != headLayer)
-    {
-        switch (currentLayer->name)
-        {
+    while (currentLayer != headLayer) {
+        switch (currentLayer->name) {
         case DenseLayer:
             dense_layer_forward_calculate(currentLayer);
             break;
@@ -965,11 +1004,12 @@ Output: 误差值lossValue
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID calculate_loss(_IN MATRIX *yOutput, _OUT MATRIX *lossValue, _IN LAYER_LIST *layerList)
-{
+VOID calculate_loss(_IN MATRIX *yOutput, _OUT MATRIX *lossValue,
+                    _IN LAYER_LIST *layerList) {
     ASSERT(yOutput != NULL);
     ASSERT(lossValue != NULL);
-    ASSERT(lossValue->rows == yOutput->rows && lossValue->columns == yOutput->columns);
+    ASSERT(lossValue->rows == yOutput->rows &&
+           lossValue->columns == yOutput->columns);
     ASSERT(layerList != NULL);
     ASSERT(layerList->next != NULL);
     ASSERT(layerList->next->next != NULL);
@@ -977,8 +1017,7 @@ VOID calculate_loss(_IN MATRIX *yOutput, _OUT MATRIX *lossValue, _IN LAYER_LIST 
     LAYER_NODE *headLayer = layerList->next, *currentLayer = NULL;
 
     currentLayer = headLayer->prev;
-    switch (layerList->loss)
-    {
+    switch (layerList->loss) {
     case MeanSquaredError:
         // TODO: ASSERT
         matrix_sub(currentLayer->Xnext, yOutput, lossValue);
@@ -998,8 +1037,8 @@ Output: 无
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID network_backward_calculcte(_IN MATRIX *lossValue, _IN LAYER_LIST *layerList)
-{
+VOID network_backward_calculcte(_IN MATRIX *lossValue,
+                                _IN LAYER_LIST *layerList) {
     ASSERT(lossValue != NULL);
     ASSERT(layerList != NULL);
     ASSERT(layerList->next != NULL);
@@ -1008,10 +1047,8 @@ VOID network_backward_calculcte(_IN MATRIX *lossValue, _IN LAYER_LIST *layerList
     LAYER_NODE *headLayer = layerList->next, *currentLayer = NULL;
 
     currentLayer = headLayer->prev;
-    while (currentLayer != headLayer)
-    {
-        switch (currentLayer->name)
-        {
+    while (currentLayer != headLayer) {
+        switch (currentLayer->name) {
         case DenseLayer:
             dense_layer_backward_calculate(currentLayer, lossValue);
             break;
@@ -1032,15 +1069,13 @@ Output: 无
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID network_weight_update(_IN LAYER_LIST *layerList, _IN INTEGER num)
-{
+VOID network_weight_update(_IN LAYER_LIST *layerList, _IN INTEGER num) {
     ASSERT(layerList != NULL);
     ASSERT(layerList->next != NULL);
     ASSERT(layerList->next->next != NULL);
     ASSERT(num >= 0);
 
-    switch (layerList->optimizer)
-    {
+    switch (layerList->optimizer) {
     case Sgd:
         weight_update_sgd(layerList);
         break;
@@ -1072,21 +1107,18 @@ Output: 无
 Input_Output: 无
 Return: 错误号errorID
 ***********************************************************************************************/
-ERROR_ID network_init(_IN LAYER_LIST *layerList)
-{
+ERROR_ID network_init(_IN LAYER_LIST *layerList) {
     LAYER_NODE *headLayer = NULL;
     ERROR_ID errorID = _ERROR_NO_ERROR;
 
-    if (layerList == NULL)
-    {
+    if (layerList == NULL) {
         errorID = _ERROR_INPUT_PARAMETERS_ERROR;
         return errorID;
     }
 
     // 申请headLayer的空间
     headLayer = (LAYER_NODE *)malloc(sizeof(LAYER_NODE));
-    if (headLayer == NULL)
-    {
+    if (headLayer == NULL) {
         errorID = _ERROR_FAILED_TO_ALLOCATE_HEAP_MEMORY;
         return errorID;
     }
@@ -1117,26 +1149,24 @@ Output: 无
 Input_Output: 无
 Return: 错误号errorID
 ***********************************************************************************************/
-ERROR_ID add_dense_layer(_IN INTEGER units, _IN ACTIVATION activation, _IN REAL alpha, _IN INIT_WEIGHTS initWeights, _IN LAYER_LIST *layerList)
-{
+ERROR_ID add_dense_layer(_IN INTEGER units, _IN ACTIVATION activation,
+                         _IN REAL alpha, _IN INIT_WEIGHTS initWeights,
+                         _IN LAYER_LIST *layerList) {
     DENSE_LAYER *denseLayer = NULL;
     LAYER_NODE *newLayer = NULL, *headLayer = NULL, *prevLayer = NULL;
     ERROR_ID errorID = _ERROR_NO_ERROR;
 
-    if (units <= 0 || alpha < 0 || alpha > 1 || layerList == NULL)
-    {
+    if (units <= 0 || alpha < 0 || alpha > 1 || layerList == NULL) {
         errorID = _ERROR_INPUT_PARAMETERS_ERROR;
         return errorID;
     }
 
-    if (!is_in_activation_tab(activation) || activation == NullActivation)
-    {
+    if (!is_in_activation_tab(activation) || activation == NullActivation) {
         errorID = _ERROR_INPUT_ACTIVATION_ERROR;
         return errorID;
     }
 
-    if (!is_in_init_weights_tab(initWeights) || initWeights == NullInitWeight)
-    {
+    if (!is_in_init_weights_tab(initWeights) || initWeights == NullInitWeight) {
         errorID = _ERROR_INPUT_INIT_WEIGHTS_ERROR;
         return errorID;
     }
@@ -1144,8 +1174,7 @@ ERROR_ID add_dense_layer(_IN INTEGER units, _IN ACTIVATION activation, _IN REAL 
     // 申请全连接层和新节点空间
     denseLayer = (DENSE_LAYER *)malloc(sizeof(DENSE_LAYER));
     newLayer = (LAYER_NODE *)malloc(sizeof(LAYER_NODE));
-    if (denseLayer == NULL || newLayer == NULL)
-    {
+    if (denseLayer == NULL || newLayer == NULL) {
         free(denseLayer);
         denseLayer = NULL;
         free(newLayer);
@@ -1206,31 +1235,29 @@ Output: 无
 Input_Output: 无
 Return: 错误号errorID
 ***********************************************************************************************/
-ERROR_ID network_compile(_IN OPTIMIZER optimizer, _IN LOSS loss, _IN LAYER_LIST *layerList)
-{
+ERROR_ID network_compile(_IN OPTIMIZER optimizer, _IN LOSS loss,
+                         _IN LAYER_LIST *layerList) {
     ERROR_ID errorID = _ERROR_NO_ERROR;
 
     // 输入参数判断
-    if (layerList == NULL)
-    {
+    if (layerList == NULL) {
         errorID = _ERROR_INPUT_PARAMETERS_ERROR;
         return errorID;
     }
 
-    if (!is_in_optimizer_tab(optimizer) || optimizer == NullOptimizer)
-    {
+    if (!is_in_optimizer_tab(optimizer) || optimizer == NullOptimizer) {
         errorID = _ERROR_INPUT_OPTIMIZER_ERROR;
         return errorID;
     }
 
-    if (!is_in_loss_tab(loss) || loss == NullLoss)
-    {
+    if (!is_in_loss_tab(loss) || loss == NullLoss) {
         errorID = _ERROR_INPUT_LOSS_ERROR;
         return errorID;
     }
 
     // 优化器参数默认值
-    layerList->optParameters = (OPTIMIZER_DEFAULT_PARAMETERS *)malloc(sizeof(OPTIMIZER_DEFAULT_PARAMETERS));
+    layerList->optParameters = (OPTIMIZER_DEFAULT_PARAMETERS *)malloc(
+        sizeof(OPTIMIZER_DEFAULT_PARAMETERS));
     layerList->optParameters->sgdAlpha = 0.01;
     layerList->optParameters->momentumAlpha = 0.9;
     layerList->optParameters->momentumBeta = 0.01;
@@ -1252,19 +1279,21 @@ ERROR_ID network_compile(_IN OPTIMIZER optimizer, _IN LOSS loss, _IN LAYER_LIST 
 /**********************************************************************************************
 Function: network_fit
 Description: 网络拟合
-Input: 训练数据xTrain，训练值yTrain，一次训练的数据量batchSize，训练次数epoches，损失函数loss，指向网络的指针layerList，矩阵栈S
+Input:
+训练数据xTrain，训练值yTrain，一次训练的数据量batchSize，训练次数epoches，损失函数loss，指向网络的指针layerList，矩阵栈S
 Output: 无
 Input_Output: 无
 Return: 错误号errorID
 ***********************************************************************************************/
-ERROR_ID network_fit(_IN MATRIX *xTrain, _IN MATRIX *yTrain, _IN INTEGER batchSize, _IN INTEGER epoches, _IN LAYER_LIST *layerList, _IN STACKS *S)
-{
+ERROR_ID network_fit(_IN MATRIX *xTrain, _IN MATRIX *yTrain,
+                     _IN INTEGER batchSize, _IN INTEGER epoches,
+                     _IN LAYER_LIST *layerList, _IN STACKS *S) {
     INTEGER i;
     ERROR_ID errorID = _ERROR_NO_ERROR;
 
     // 输入参数判断
-    if (xTrain == NULL || yTrain == NULL || batchSize <= 0 || epoches <= 0 || layerList == NULL || S == NULL)
-    {
+    if (xTrain == NULL || yTrain == NULL || batchSize <= 0 || epoches <= 0 ||
+        layerList == NULL || S == NULL) {
         errorID = _ERROR_INPUT_PARAMETERS_ERROR;
         goto EXIT;
     }
@@ -1274,8 +1303,7 @@ ERROR_ID network_fit(_IN MATRIX *xTrain, _IN MATRIX *yTrain, _IN INTEGER batchSi
     MATRIX *yOutput = creat_matrix(batchSize, yTrain->columns, &errorID, S);
     MATRIX *lossValue = creat_matrix(batchSize, yTrain->columns, &errorID, S);
 
-    if (errorID != _ERROR_NO_ERROR)
-    {
+    if (errorID != _ERROR_NO_ERROR) {
         goto EXIT;
     }
 
@@ -1283,8 +1311,7 @@ ERROR_ID network_fit(_IN MATRIX *xTrain, _IN MATRIX *yTrain, _IN INTEGER batchSi
     srand((unsigned int)time(NULL)); //用时间做种，每次产生随机数不一样
     errorID = init_hidden_layer(xTrain, batchSize, layerList, S);
 
-    for (i = 0; i < epoches; i++)
-    {
+    for (i = 0; i < epoches; i++) {
         // 正向计算
         choose_input(xTrain, xInput, yTrain, yOutput, arr);
         network_forward_calculcte(xInput, layerList);
@@ -1308,21 +1335,19 @@ Output: 无
 Input_Output: 无
 Return: 预测值
 ***********************************************************************************************/
-MATRIX *network_predict(_IN MATRIX *xTest, _IN LAYER_LIST *layerList, _IN ERROR_ID *errorID, _IN STACKS *S)
-{
+MATRIX *network_predict(_IN MATRIX *xTest, _IN LAYER_LIST *layerList,
+                        _IN ERROR_ID *errorID, _IN STACKS *S) {
     INTEGER rows, columns;
     INDEX i, j;
     MATRIX *yPred = NULL;
     LAYER_LIST predictLayerList;
 
     // 输入参数判断
-    if (*errorID != _ERROR_NO_ERROR)
-    {
+    if (*errorID != _ERROR_NO_ERROR) {
         goto EXIT;
     }
 
-    if (xTest == NULL || layerList == NULL || S == NULL)
-    {
+    if (xTest == NULL || layerList == NULL || S == NULL) {
         *errorID = _ERROR_INPUT_PARAMETERS_ERROR;
         goto EXIT;
     }
@@ -1332,12 +1357,14 @@ MATRIX *network_predict(_IN MATRIX *xTest, _IN LAYER_LIST *layerList, _IN ERROR_
     // 生成相同的网络
     *errorID = network_init(&predictLayerList);
     currentLayer = headLayer->next;
-    while (currentLayer != headLayer && *errorID == _ERROR_NO_ERROR)
-    {
-        switch (currentLayer->name)
-        {
+    while (currentLayer != headLayer && *errorID == _ERROR_NO_ERROR) {
+        switch (currentLayer->name) {
         case DenseLayer:
-            *errorID = add_dense_layer(currentLayer->Xnext->columns, currentLayer->pDenseLayer->activation, currentLayer->pDenseLayer->alpha, currentLayer->pDenseLayer->initWeights, &predictLayerList);
+            *errorID = add_dense_layer(currentLayer->Xnext->columns,
+                                       currentLayer->pDenseLayer->activation,
+                                       currentLayer->pDenseLayer->alpha,
+                                       currentLayer->pDenseLayer->initWeights,
+                                       &predictLayerList);
             break;
 
         default:
@@ -1346,21 +1373,22 @@ MATRIX *network_predict(_IN MATRIX *xTest, _IN LAYER_LIST *layerList, _IN ERROR_
 
         currentLayer = currentLayer->next;
     }
-    *errorID = network_compile(layerList->optimizer, layerList->loss, &predictLayerList);
+    *errorID = network_compile(layerList->optimizer, layerList->loss,
+                               &predictLayerList);
 
     // 开始计算
-    *errorID = init_predict_hidden_layer(xTest->rows, &predictLayerList, layerList, S);
+    *errorID =
+        init_predict_hidden_layer(xTest->rows, &predictLayerList, layerList, S);
     network_forward_calculcte(xTest, &predictLayerList);
 
     // 赋值
     rows = predictLayerList.next->prev->Xnext->rows;
     columns = predictLayerList.next->prev->Xnext->columns;
     yPred = creat_matrix(rows, columns, errorID, S);
-    for (i = 0; i < rows; i++)
-    {
-        for (j = 0; j < columns; j++)
-        {
-            yPred->p[i * columns + j] = predictLayerList.next->prev->Xnext->p[i * columns + j];
+    for (i = 0; i < rows; i++) {
+        for (j = 0; j < columns; j++) {
+            yPred->p[i * columns + j] =
+                predictLayerList.next->prev->Xnext->p[i * columns + j];
         }
     }
 
@@ -1378,21 +1406,18 @@ Output: 无
 Input_Output: 无
 Return: 无
 ***********************************************************************************************/
-VOID free_network(_IN LAYER_LIST *layerList)
-{
-    if (layerList == NULL)
-    {
+VOID free_network(_IN LAYER_LIST *layerList) {
+    if (layerList == NULL) {
         return;
     }
 
-    LAYER_NODE *headLayer = layerList->next, *currentLayer = headLayer->next, *nextLayer = NULL;
+    LAYER_NODE *headLayer = layerList->next, *currentLayer = headLayer->next,
+               *nextLayer = NULL;
 
-    while (currentLayer != headLayer)
-    {
+    while (currentLayer != headLayer) {
         nextLayer = currentLayer->next;
 
-        switch (currentLayer->name)
-        {
+        switch (currentLayer->name) {
         case DenseLayer:
             free(currentLayer->pDenseLayer);
             currentLayer->pDenseLayer = NULL;
